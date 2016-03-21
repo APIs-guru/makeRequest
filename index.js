@@ -2,9 +2,9 @@ var URI = require('urijs');
 var async = require('async');
 var request = require('request');
 
-exports = function (op, url, options, callback) {
+module.exports = function (op, url, options, callback) {
   op = op.toUpperCase();
-  if (_.isFunction(options)) {
+  if (typeof options === 'function') {
     callback = options;
     options = {};
   }
