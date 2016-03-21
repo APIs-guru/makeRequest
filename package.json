@@ -1,5 +1,6 @@
 {
   "private": true,
+  "name": "makeRequest",
   "main": "index.js",
   "dependencies": {
     "async": "^1.5.2",
