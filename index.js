@@ -1,14 +1,12 @@
 var URI = require('urijs');
-var async = require('async');
-var request = require('request');
+var Promise = require('bluebird');
+var request = Promise.promisify(require('request'), {multiArgs: true});
 
-module.exports = function (op, url, options, callback) {
+module.exports = function (op, url, options) {
   op = op.toUpperCase();
-  if (typeof options === 'function') {
-    callback = options;
-    options = {};
-  }
 
+  options = options || {};
+  options.expectCode = options.expectCode || 200;
   options.url = url;
   options.method = op;
   options.jar = true;
@@ -18,23 +16,29 @@ module.exports = function (op, url, options, callback) {
   if (op !== 'HEAD')
     options.gzip = true;
 
-  var expectCode = options.expectCode || 200;
-  var readableUrl = URI(url).readable();
+  var tries = 3;
+  return wrapper();
 
-  async.retry({}, function (asyncCallback) {
-    request(options, function(err, response, data) {
-      var errMsg = 'Can not ' + op + ' "' + readableUrl +'": ';
-      if (err)
-        return asyncCallback(new Error(errMsg + err));
-      if (response.statusCode !== expectCode)
-        return asyncCallback(new Error(errMsg + response.statusMessage));
-      asyncCallback(null, {response: response, data: data});
+  function wrapper() {
+    var readableUrl = URI(url).readable();
+    var errMsg = 'Can not ' + op + ' "' + readableUrl +'": ';
+
+    return request(options)
+    .then(function(result) {
+      var response = result[0];
+      if (response.statusCode !== options.expectCode)
+        throw Error(errMsg + response.statusMessage);
+      console.log(op + ' ' + readableUrl);
+      return result;
+    }, function (err) {
+      throw Error(errMsg + err);
+    })
+    .catch(function (error) {
+      if (--tries === 0)
+       throw error;
+      console.log(error);
+      console.log('Retry operations, ' + tries + ' tries left.');
+      return Promise.delay(1000).then(wrapper);
     });
-  }, function (err, result) {
-    if (err)
-      return callback(err);
-
-    console.log(op + ' ' + readableUrl);
-    callback(null, result.response, result.data);
-  });
+  }
 }
