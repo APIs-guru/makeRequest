@@ -28,7 +28,8 @@ module.exports = function (op, url, options) {
       var response = result[0];
       if (response.statusCode !== options.expectCode)
         throw Error(errMsg + response.statusMessage);
-      console.log(op + ' ' + readableUrl);
+      if (!options.silent)
+        console.log(op + ' ' + readableUrl);
       return result;
     }, function (err) {
       throw Error(errMsg + err);
