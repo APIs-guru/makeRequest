@@ -2,7 +2,7 @@ var URI = require('urijs');
 var Promise = require('bluebird');
 var request = Promise.promisify(require('request'), {multiArgs: true});
 
-module.exports = function (op, url, options) {
+module.exports = function makeRequest(op, url, options) {
   op = op.toUpperCase();
 
   options = options || {};
@@ -42,4 +42,21 @@ module.exports = function (op, url, options) {
       return Promise.delay(1000).then(wrapper);
     });
   }
+}
+
+module.exports.get = function (url, options) {
+  return module.exports('get', url)
+    .spread((response, data) => data);
+}
+
+module.exports.getJson = function (url, options) {
+  return module.exports.get(url, options)
+    .then(data => JSON.parse(data));
+}
+
+module.exports.getRaw = function (url, options) {
+  options = options || {};
+  options.encoding = null;
+
+  return module.exports.get(url, options);
 }
