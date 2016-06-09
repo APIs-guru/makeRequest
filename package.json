@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "makeRequest",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "main": "index.js",
   "dependencies": {
     "bluebird": "^3.3.4",

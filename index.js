@@ -45,7 +45,7 @@ module.exports = function makeRequest(op, url, options) {
 }
 
 module.exports.get = function (url, options) {
-  return module.exports('get', url)
+  return module.exports('get', url, options)
     .spread((response, data) => data);
 }
 
