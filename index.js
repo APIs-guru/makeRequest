@@ -7,6 +7,7 @@ module.exports = function makeRequest(op, url, options) {
 
   options = options || {};
   options.expectCode = options.expectCode || 200;
+  options.retries = options.retries || 3;
   options.url = url;
   options.method = op;
   options.jar = true;
@@ -16,7 +17,6 @@ module.exports = function makeRequest(op, url, options) {
   if (op !== 'HEAD')
     options.gzip = true;
 
-  var tries = 3;
   return wrapper();
 
   function wrapper() {
@@ -26,7 +26,8 @@ module.exports = function makeRequest(op, url, options) {
     return request(options)
     .then(function(result) {
       var response = result[0];
-      if (response.statusCode !== options.expectCode)
+	  // TODO handle redirects
+      if ((response.statusCode !== options.expectCode) && (response.statusCode !== 304))
         throw Error(errMsg + response.statusMessage);
       if (!options.silent)
         console.log(op + ' ' + readableUrl);
@@ -35,10 +36,10 @@ module.exports = function makeRequest(op, url, options) {
       throw Error(errMsg + err);
     })
     .catch(function (error) {
-      if (--tries === 0)
-       throw error;
+      if (--options.retries === 0)
+        throw error;
       console.log(error);
-      console.log('Retry operations, ' + tries + ' tries left.');
+      console.log('Retry operations, ' + options.retries + ' tries left.');
       return Promise.delay(1000).then(wrapper);
     });
   }
